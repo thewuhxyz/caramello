@@ -1,2 +1,1 @@
-const std = @import("std");
-
+pub usingnamespace @import("account.zig");
