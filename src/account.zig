@@ -1,7 +1,7 @@
 const solana = @import("solana-program-sdk");
 
 pub fn Readonly(comptime T: type) type {
-    return struct {
+    return extern struct {
         __account: *const solana.Account,
 
         const Self = @This();
@@ -29,7 +29,7 @@ pub fn Readonly(comptime T: type) type {
 }
 
 pub fn Writable(comptime T: type) type {
-    return struct {
+    return extern struct {
         __account: *const solana.Account,
 
         const Self = @This();

@@ -18,9 +18,17 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
     const solana_mod = solana_dep.module("solana-program-sdk");
+    
+    const spl_dep = b.dependency("solana-program-library", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const spl_mod = spl_dep.module("solana-program-library");
 
     src.root_module.addImport("solana-program-sdk", solana_mod);
+    src.root_module.addImport("solana-program-library", spl_mod);
     caramello_mod.addImport("solana-program-sdk", solana_mod);
+    caramello_mod.addImport("solana-program-library", spl_mod);
 
     b.installArtifact(src);
 }

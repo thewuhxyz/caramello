@@ -1,6 +1,6 @@
 const sol = @import("solana-program-sdk");
-const caramello = @import("caramello");
-// const caramello = @import("../../../src/root.zig");
+// const caramello = @import("caramello");
+const caramello = @import("../../../src/root.zig");
 
 const ReadonlyAccount = caramello.ReadonlyAccount;
 const WritableAccount = caramello.WritableAccount;
@@ -14,9 +14,15 @@ export fn entrypoint(input: [*]u8) u64 {
     // const owner_account = WritableAccount(Counter, true).from(&accounts[1]);
     // const counter_two_account = ReadonlyAccount(Counter, true).from(&accounts[2]);
 
-    var counter_account = caramello.Writable(Counter).from(@constCast(&accounts[0]));
-    const owner_account = caramello.Writable(Counter).from(@constCast(&accounts[1]));
-    const counter_two_account = caramello.Writable(Counter).from(@constCast(&accounts[2]));
+    const ctx = caramello.syncAccounts(IncrementContext, @constCast(&accounts));
+
+    const counter_account = ctx.counter;
+    const owner_account = ctx.owner;
+    const counter_two_account = ctx.counter_two;
+
+    // var counter_account = caramello.Writable(Counter).from(@constCast(&accounts[0]));
+    // const owner_account = caramello.Writable(Counter).from(@constCast(&accounts[1]));
+    // const counter_two_account = caramello.Writable(Counter).from(@constCast(&accounts[2]));
 
     const counter_data = counter_account.data();
 
@@ -47,25 +53,32 @@ export fn entrypoint(input: [*]u8) u64 {
     sol.print("counter lamports: {d}", .{counter_account.lamports().*});
     sol.print("counter two lamports : {d}", .{counter_two_account.lamports().*});
 
+    sol.print("counter owner : {s}", .{ctx.owner.id()});
     return 0;
 }
 
 const IncrementContext = extern struct {
-    counter: WritableAccount(Counter, false),
-    owner: ReadonlyAccount(Counter, true),
-    counter_two: ReadonlyAccount(Counter, true),
+    counter: caramello.Writable(Counter),
+    owner: caramello.Writable(Counter),
+    counter_two: caramello.Writable(Counter),
 
-    pub const @"*init" = .{"counter"};
-    pub const @"*init_if_needed" = .{"counter_two"};
+    // counter: WritableAccount(Counter, false),
+    // owner: ReadonlyAccount(Counter, true),
+    // counter_two: ReadonlyAccount(Counter, true),
 
-    pub const @"*counter:seeds" = .{ "*owner", "*.count", "*.payer" };
-    pub const @"*counter:bump" = "*";
+    const @"*counter:init" = "owner";
+    const @"*counter:seeds" = .{ "*owner", "*.count", "*.payer" };
+    const @"*counter:bump" = "*";
 
-    pub const @"*counter_two:seeds" = .{ "*owner", "*.count", "*.payer" };
+    const @"*counter_two:init_if_needed" = .{"counter_two"};
+    const @"*counter_two:seeds" = .{ "*owner", "*.count", "*.payer" };
 };
 
 const Counter = packed struct {
     owner: sol.PublicKey,
     count: u64,
-};
 
+    pub fn get_count(counter: *Counter) u64 {
+        return counter.count;
+    }
+};
